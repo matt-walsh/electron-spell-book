@@ -1,0 +1,37 @@
+body {
+    background-image: url("../images/scroll.jpg");
+    font-family: Caveat-Brush;
+    font-size: 12pt;
+    margin: auto;
+    max-width: 55rem;
+    padding: 2rem;
+}
+
+.flex-container{
+    padding-top: 1em;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.input-component{
+    margin: 0.2rem;
+    padding: 1rem;
+}
+
+.button{
+    background-color: #7a7b83;
+    border: none;
+    color: white;
+    padding: 10px 75px;
+    margin: 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 3px;
+}
+
+.cancel{
+    background-color: #d81919;
+}

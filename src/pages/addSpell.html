@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles/fonts.css">
+    <link rel="stylesheet" href="../styles/addSpell.css">
+    <title>Add Spell to Book</title>
+</head>
+<body>
+    <form>
+        <div class="flex-container">
+            <div class="input-component">
+                <label for="name">Name:</label>
+                <input type="text" name="name" id="name" autofocus required>
+            </div>
+            
+            <div class="input-component">
+                <label for="school">School:</label>
+                <select name="school" name="school" id="school" required>
+                    <option value="abjuration ">Abjuration </option>
+                    <option value="conjuration">Conjuration</option>
+                    <option value="divination">Divination</option>
+                    <option value="enchantment">Enchantment</option>
+                    <option value="evocation">Evocation</option>
+                    <option value="illusion">Illusion</option>
+                    <option value="necromancy">Necromancy</option>
+                    <option value="transmutation">Transmutation</option>
+                </select>
+            </div >
+
+            <div class="input-component">
+                <label for="ritual">Ritual:</label>
+                <input type="checkbox" name="ritual" id="ritual">
+            </div>
+            
+            <div class="input-component">
+                <label for="level">Level:</label>
+                <input type="number" name="level" id="level" min="0" max="9" required>
+            </div>
+
+            <div class="input-component">
+                <label for="casting">Casting Time:</label>
+                <input type="text" name="casting" id="casting" required>
+            </div>
+
+            <div class="input-component">
+                <label for="components">Components:</label>
+                <label for="verbal">Verbal</label>
+                <input type="checkbox" name="verbal" id="verbal">
+                <label for="somatic">Somatic</label>
+                <input type="checkbox" name="somatic" id="somatic">
+                <label for="material">Material</label>
+                <input type="checkbox" name="material" id="material">
+            </div>
+
+            <div class="input-component">
+                <label for="materials">Materials:</label>
+                <input type="text" name="materials" id="materials">
+            </div>
+
+            <div class="input-component">
+                <label for="reference">Source:</label>
+                <input type="text" name="reference" id="reference" required>
+            </div>
+
+            <button type="submit" class="button">Add Spell</button>
+            <button class="button cancel">Clear Spell</button>
+        </div>
+      </form>
+
+      <script src="../scripts/addSpell.js"></script>
+</body>
+</html>

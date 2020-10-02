@@ -1,10 +1,8 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
 
 let mainWindow;
 let addWindow;
-
-let menu;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -14,33 +12,88 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 const createMainWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1045,
+    height: 815,
+    webPreferences: {
+      nodeIntegration: true
+    }
   });
 
   // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'pages/spellbook.html'));
 
-  // Open the DevTools.
-  //mainWindow.webContents.openDevTools();
+  //Add Menu from template
+  let menu = Menu.buildFromTemplate(mainMenuTemplate);
+  Menu.setApplicationMenu(menu)
+
+  //Explicily close app on window close
+  mainWindow.on('closed', function() {
+    app.quit();
+  });
 };
 
 const createAddWindow = () =>{
-  addWindow= new BrowserWindow({
-    width: 300,
-    height: 300,
-    title: 'Add Item',
+  addWindow = new BrowserWindow({
+    width: 657,
+    height: 490,
+    title: 'Add Spell',
     webPreferences: {
       nodeIntegration: true
     }
   })
 
-  addWindow.loadFile(path.join(__dirname, 'addSpell.html'))
+  addWindow.loadFile(path.join(__dirname, 'pages/addSpell.html'))
 
   addWindow.on('close', () => {
     addWindow = null;
   })
+
+  //Add Window Debug Menu
+  let menu = Menu.buildFromTemplate(addMenuTemplate);
+  addWindow.setMenu(menu);
 }
+
+//Clear Window Function
+function clearWindow()
+{
+    mainWindow.webContents.send('spell:clear');
+}
+
+//template for menu
+const mainMenuTemplate = [
+  {
+    label: '&File',
+    submenu: [
+      {
+        label: '&Add Spell',
+        click() {createAddWindow()}
+      },
+      {
+        label: '&Clear Book',
+        click(){clearWindow()}
+      },
+      {
+        label: '&Quit',
+        click(){app.quit()}
+      }
+    ]
+  },
+  {
+    label: "&Debug",
+    click(){mainWindow.webContents.openDevTools();}
+  }
+];
+
+//template for add
+const addMenuTemplate = [
+  {
+    label: "&Debug",
+    click(){addWindow.webContents.openDevTools();}
+  },
+  {
+    role: 'reload'
+  }
+];
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -67,12 +120,19 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-//Setup ipc?
-ipcMain.on('item:add', (event, item) => {
-  console.log(item);
-  mainWindow.webContents.send('item:add',item);
+//Setup Global Accelerator (ctrl-q to quit)
+app.whenReady().then(() => {
+  // Register a 'CommandOrControl+Q' shortcut listener.
+  globalShortcut.register('CommandOrControl+Q', () => {
+    app.quit();
+  })
+})
+
+//Setup AddSpell IPC event
+ipcMain.on('spell:add', (event, spell) => {
+  console.log(spell);
+  mainWindow.webContents.send('spell:add',spell);
   addWindow.close();
 })
 
-menu = Menu.buildFromTemplate(mainMenuTemplate);
-menu.setApplicationMenu(Menu);
+
