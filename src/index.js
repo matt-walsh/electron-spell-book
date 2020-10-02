@@ -82,6 +82,9 @@ const mainMenuTemplate = [
   {
     label: "&Debug",
     click(){mainWindow.webContents.openDevTools();}
+  },
+  {
+    role: 'reload'
   }
 ];
 
