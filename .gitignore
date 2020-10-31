@@ -88,6 +88,8 @@ typings/
 # Electron-Forge
 out/
 
-# Open lab docs
+#Llab docs
+*.doc
+*.docx
 ~*.doc
 ~*.docx

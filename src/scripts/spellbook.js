@@ -2,9 +2,7 @@ const electron = require('electron');
 const {ipcRenderer} = electron;
 const SPELLS_PER_PAGE = 5;
 
-//catch add item
-ipcRenderer.on('spell:add', (event, spell) =>{
-  console.log(spell)
+function createSpellTable(spell){
   //Create spell table Element
   let spellTable = document.createElement('table');
   
@@ -34,10 +32,11 @@ ipcRenderer.on('spell:add', (event, spell) =>{
   //Create Delete button and onClick handlers
   let deleteButton = document.createElement('button');
   deleteButton.setAttribute('class', 'delete-button');
-  deleteButton.innerText = "X";
+  deleteButton.setAttribute('data-spell-id', spell.id);
+  deleteButton.innerText = "🗑️";
   deleteButton.addEventListener('click', (event) =>{
     console.log(event);
-    event.path[4].removeChild(event.path[3]);
+    ipcRenderer.send("spell:delete", event.target.dataset.spellId)
   })
 
   //Append button to cell, and the cell to the row
@@ -60,7 +59,7 @@ ipcRenderer.on('spell:add', (event, spell) =>{
   dataRowTop.appendChild(schoolData);
 
   let ritualData = document.createElement('td');
-  if(spell.ritual === true){
+  if(spell.ritual === 1){
     ritualData.appendChild(document.createTextNode('X'));
   }
   dataRowTop.appendChild(ritualData);
@@ -70,8 +69,23 @@ ipcRenderer.on('spell:add', (event, spell) =>{
   dataRowTop.appendChild(levelData);
 
   let sourceData = document.createElement('td');
-  sourceData.appendChild(document.createTextNode(spell.reference));
+  sourceData.appendChild(document.createTextNode(spell.source));
   dataRowTop.appendChild(sourceData);
+
+  //Create Update button and onClick handlers
+  let updateButton = document.createElement('button');
+  updateButton.setAttribute('class', 'update-button');
+  updateButton.setAttribute('data-spell-id', spell.id);
+  updateButton.innerText = "✏️";
+  updateButton.addEventListener('click', (event) =>{
+    console.log(event);
+    ipcRenderer.send("spell:showUpdate", event.target.dataset.spellId)
+  })
+
+  //Append button to cell, and the cell to the row
+  let updateCell = document.createElement('th');
+  updateCell.appendChild(updateButton);
+  dataRowTop.appendChild(updateCell);
 
   //Append first data row to table
   spellTable.appendChild(dataRowTop)
@@ -98,11 +112,11 @@ ipcRenderer.on('spell:add', (event, spell) =>{
   //Create three table cells to hold spell details and add each to the second data row
   let dataRowbottom = document.createElement('tr');
 
-  let timeData = document.createElement('th');
-  timeData.appendChild(document.createTextNode(spell.casting));
+  let timeData = document.createElement('td');
+  timeData.appendChild(document.createTextNode(spell.time));
   dataRowbottom.appendChild(timeData);
 
-  let componentsData = document.createElement('th');
+  let componentsData = document.createElement('td');
   let componentString = ""
   if(spell.verbal === true){
     componentString += "V";
@@ -116,7 +130,7 @@ ipcRenderer.on('spell:add', (event, spell) =>{
   componentsData.appendChild(document.createTextNode(componentString));
   dataRowbottom.appendChild(componentsData);
 
-  let materialsData = document.createElement('th');
+  let materialsData = document.createElement('td');
   materialsData.setAttribute('colspan', '3')
   materialsData.appendChild(document.createTextNode(spell.materials));
   dataRowbottom.appendChild(materialsData);
@@ -124,32 +138,47 @@ ipcRenderer.on('spell:add', (event, spell) =>{
   //Append second data row to table
   spellTable.appendChild(dataRowbottom);
 
-  //Append the spellTable to the page
+  return spellTable;
+}
 
-  //Determine the number of non-text nodes on each side of the page
-  let leftPage = document.querySelector('#left-page');
-  let leftCount = 0;
-  leftPage.childNodes.forEach((node, index, parent) => {
-    if(node.nodeType === 1){
-      leftCount++;
-    }
-  });
-
+ipcRenderer.on('spell:refresh', (event, spells) =>{
+  //Clear pages for refresh
   let rightPage = document.querySelector('#right-page');
-  let rightCount = 0;
-  rightPage.childNodes.forEach((node, index, parent) => {
-    if(node.nodeType === 1){
-      rightCount++;
-    }
+  let leftPage = document.querySelector('#left-page');
+  rightPage.innerHTML = "";
+  leftPage.innerHTML = "";
+
+  //Create array of spellTables
+  let spellTables = spells.map(spell => {
+    return createSpellTable(spell);
   });
 
-  //if left column is full, put into right column 
-  if(leftCount < SPELLS_PER_PAGE){
-    leftPage.appendChild(spellTable);
-  }
-  else if(rightCount < SPELLS_PER_PAGE){
-    rightPage.appendChild(spellTable);
-  }
+  //Append the spellTables to the page
+  spellTables.forEach(spellTable =>{
+    //Determine the number of non-text nodes on each side of the page
+    let leftCount = 0;
+    leftPage.childNodes.forEach((node, index, parent) => {
+      if(node.nodeType === 1){
+        leftCount++;
+      }
+    });
+
+    
+    let rightCount = 0;
+    rightPage.childNodes.forEach((node, index, parent) => {
+      if(node.nodeType === 1){
+        rightCount++;
+      }
+    });
+
+    //if left column is full, put into right column 
+    if(leftCount < SPELLS_PER_PAGE){
+      leftPage.appendChild(spellTable);
+    }
+    else if(rightCount < SPELLS_PER_PAGE){
+      rightPage.appendChild(spellTable);
+    }
+  });
 });
 
 //Clear Spell Book

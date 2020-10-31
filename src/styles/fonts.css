@@ -1,4 +1,9 @@
 @font-face {
-    font-family: Caveat-Brush;
-    src: url(../fonts/CaveatBrush-Regular.ttf);
+    font-family: Endor;
+    src: url(../fonts/ENDOR.ttf);
   }
+
+@font-face {
+  font-family: EndorAlt;
+  src: url(../fonts/ENDORALT.ttf);
+}

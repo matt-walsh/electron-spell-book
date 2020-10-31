@@ -1,8 +1,19 @@
-const { app, BrowserWindow, Menu, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, globalShortcut, ipcRenderer } = require('electron');
 const path = require('path');
+
+//Import and configure Knex
+let sqlite3 = require('sqlite3')
+let knex = require("knex")({
+  client: 'sqlite3',
+  connection: {
+    filename: path.resolve(__dirname, './data/spellbook.db')
+  },
+  useNullAsDefault: true
+});
 
 let mainWindow;
 let addWindow;
+let updateWindow;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -31,6 +42,14 @@ const createMainWindow = () => {
   mainWindow.on('closed', function() {
     app.quit();
   });
+
+  //Wait for window to finish loading before issueing ipc events
+  mainWindow.webContents.on('did-finish-load', () => {
+    //load spells and trigger refresh
+    knex.select().table('spells').then(spells =>{
+      mainWindow.webContents.send('spell:refresh',spells);
+    });
+  })
 };
 
 const createAddWindow = () =>{
@@ -52,6 +71,48 @@ const createAddWindow = () =>{
   //Add Window Debug Menu
   let menu = Menu.buildFromTemplate(addMenuTemplate);
   addWindow.setMenu(menu);
+
+  //Wait for window to finish loading before issuing ipc events
+  addWindow.webContents.on('did-finish-load', () => {
+    //load schools
+    knex.select().table('schools').then(schools =>{
+      addWindow.webContents.send('spell:loadSchool', schools);
+    });
+  })
+}
+
+const createUpdateWindow = (spellId) =>{
+  updateWindow = new BrowserWindow({
+    width: 657,
+    height: 490,
+    title: 'Update Spell',
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+
+  updateWindow.loadFile(path.join(__dirname, 'pages/updateSpell.html'))
+
+  updateWindow.on('close', () => {
+    updateWindow = null;
+  })
+
+  //Add Window Debug Menu
+  let menu = Menu.buildFromTemplate(updateMenuTemplate)
+  updateWindow.setMenu(menu);
+
+  //Wait for window to finish loading before issueing ipc events
+  updateWindow.webContents.on('did-finish-load', () => {
+    //load schools
+    knex.select().table('schools').then(schools =>{
+      updateWindow.webContents.send('spell:loadSchool', schools);
+    });
+
+    //Load spell
+    knex('spells').where("id", spellId).then(spell =>{
+      updateWindow.webContents.send('spell:loadSpell', spell[0]);
+    });
+  })
 }
 
 //Clear Window Function
@@ -60,15 +121,11 @@ function clearWindow()
     mainWindow.webContents.send('spell:clear');
 }
 
-//template for menu
+//template for spellbook menu
 const mainMenuTemplate = [
   {
     label: '&File',
     submenu: [
-      {
-        label: '&Add Spell',
-        click() {createAddWindow()}
-      },
       {
         label: '&Clear Book',
         click(){clearWindow()}
@@ -80,19 +137,43 @@ const mainMenuTemplate = [
     ]
   },
   {
+    label: '&Add Spell',
+    click() {createAddWindow()}
+  },
+  //DEBUG BELOW
+  {
     label: "&Debug",
     click(){mainWindow.webContents.openDevTools();}
+  },
+  {
+    label: "Refresh Data",
+    click(){
+      knex.select().table('spells').then(spells =>{
+        mainWindow.webContents.send('spell:refresh',spells);
+      });
+    }
   },
   {
     role: 'reload'
   }
 ];
 
-//template for add
+//template for add menu
 const addMenuTemplate = [
   {
     label: "&Debug",
     click(){addWindow.webContents.openDevTools();}
+  },
+  {
+    role: 'reload'
+  }
+];
+
+//template for update menu
+const updateMenuTemplate = [
+  {
+    label: "&Debug",
+    click(){updateWindow.webContents.openDevTools();}
   },
   {
     role: 'reload'
@@ -130,13 +211,62 @@ app.whenReady().then(() => {
   globalShortcut.register('CommandOrControl+Q', () => {
     app.quit();
   })
+});
+
+//Setup Show Update Window IPC Event
+ipcMain.on("spell:showUpdate", (event, spellId) =>{
+  createUpdateWindow(spellId);
 })
 
-//Setup AddSpell IPC event
+//Setup Create Spell IPC event
 ipcMain.on('spell:add', (event, spell) => {
-  console.log(spell);
-  mainWindow.webContents.send('spell:add',spell);
-  addWindow.close();
-})
 
+  //Save spell to DB
+  knex('spells').insert(spell).then(value =>{
+    //Get all spells and send to spell:refresh event
+    knex.select().table('spells').then(spells =>{
+      mainWindow.webContents.send('spell:refresh',spells);
+      addWindow.close();
+    });
+  })
+});
+
+//Setup Update Spell IPC Event
+ipcMain.on('spell:update', (event, spell) =>{
+  //Ensure spell exists
+  knex('spells').select('id').where({'id': Number.parseInt(spell.id)})
+  .then( spellId =>{
+    //update spell in DB
+    knex('spells').where('id', spellId[0].id).update(spell)
+    .catch(error =>{
+      console.log(error);
+    })
+    .then(rowCount => {
+      //Refresh spellbook page
+      knex.select().table('spells').then(spells =>{
+        mainWindow.webContents.send('spell:refresh',spells);
+        updateWindow.close();
+      });
+    })
+  })
+});
+
+//Setup Delete Spell IPC Envent
+ipcMain.on('spell:delete', (event, spellId) =>{
+  //Ensure spell exists
+  knex('spells').select('id').where({'id': Number.parseInt(spellId)})
+  .then( spellId =>{
+    //delete spell from DB
+    knex('spells').where('id', spellId[0].id).del()
+    .catch(error =>{
+      console.log(error);
+    })
+    .then(rowCount => {
+      //Refresh spellbook page
+      knex.select().table('spells').then(spells =>{
+        mainWindow.webContents.send('spell:refresh',spells);
+      });
+    })
+  })
+});
 
