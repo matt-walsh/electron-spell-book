@@ -57,9 +57,11 @@ function createSpellTable(spell){
   let schoolData = document.createElement('td');
   schoolData.appendChild(document.createTextNode(spell.school));
   dataRowTop.appendChild(schoolData);
+  //TODO: Show School Name Instead of id
 
   let ritualData = document.createElement('td');
-  if(spell.ritual === 1){
+  console.log(spell.ritual);
+  if(Number.parseInt(spell.ritual) === 1){
     ritualData.appendChild(document.createTextNode('X'));
   }
   dataRowTop.appendChild(ritualData);
@@ -118,13 +120,13 @@ function createSpellTable(spell){
 
   let componentsData = document.createElement('td');
   let componentString = ""
-  if(spell.verbal === true){
+  if(Number.parseInt(spell.verbal) === 1){
     componentString += "V";
   }
-  if(spell.somatic === true){
+  if(Number.parseInt(spell.somatic) === 1){
     componentString += "S";
   }
-  if(spell.material === true){
+  if(Number.parseInt(spell.material) === 1){
     componentString += "M";
   }
   componentsData.appendChild(document.createTextNode(componentString));
