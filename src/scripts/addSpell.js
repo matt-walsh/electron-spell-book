@@ -22,7 +22,28 @@ form.addEventListener('submit', (event) =>{
     ipcRenderer.send('spell:add', spell);
 });
 
+//Applies a theme, if the setting has been saved.
+function applyTheme(theme){
+    //Get a reference to the style style sheet link tag
+    let currentSheet = document.getElementById('spellbook-style');
+  
+    switch (theme) {
+      case 'dark':
+        currentSheet.href = "../styles/addspell-styles-dark.css";
+        break;
+    
+      default:
+        currentSheet.href = "../styles/addspell-styles-default.css";
+        break;
+    }
+}
 
+ipcRenderer.on('settings:apply', (event, savedSettings) =>{
+    //Change href value to correct theme
+    if(savedSettings.theme){
+        applyTheme(savedSettings.theme);
+    }
+})
 ipcRenderer.on('spell:loadSchool', (event, schools) =>{
     let schoolDropDown = document.querySelector("#school");
 

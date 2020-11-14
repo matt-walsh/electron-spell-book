@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Menu, ipcMain, globalShortcut, ipcRenderer } = require('electron');
+const fs = require('fs');
 const path = require('path');
 
 //Import and configure Knex
@@ -11,9 +12,13 @@ let knex = require("knex")({
   useNullAsDefault: true
 });
 
+//Windows
 let mainWindow;
 let addWindow;
 let updateWindow;
+
+//User Settings
+let userSettings;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -45,6 +50,18 @@ const createMainWindow = () => {
 
   //Wait for window to finish loading before issueing ipc events
   mainWindow.webContents.on('did-finish-load', () => {
+    //Load saved data from settings.json
+    fs.readFile("./src/data/settings.json", (err, data) =>{
+      //Output errors
+      if(err) {
+        console.log(err);
+      }
+      else{
+        userSettings = JSON.parse(data)
+        mainWindow.webContents.send('settings:apply',userSettings);
+      }
+    });
+
     //load spells and trigger refresh
     knex.select().table('spells').then(spells =>{
       mainWindow.webContents.send('spell:refresh',spells);
@@ -74,6 +91,8 @@ const createAddWindow = () =>{
 
   //Wait for window to finish loading before issuing ipc events
   addWindow.webContents.on('did-finish-load', () => {
+    //apply settings to window
+    addWindow.webContents.send('settings:apply',userSettings);
     //load schools
     knex.select().table('schools').then(schools =>{
       addWindow.webContents.send('spell:loadSchool', schools);
@@ -103,6 +122,9 @@ const createUpdateWindow = (spellId) =>{
 
   //Wait for window to finish loading before issueing ipc events
   updateWindow.webContents.on('did-finish-load', () => {
+    //apply settings to window
+    addWindow.webContents.send('settings:apply',userSettings);
+
     //load schools
     knex.select().table('schools').then(schools =>{
       updateWindow.webContents.send('spell:loadSchool', schools);
@@ -139,6 +161,19 @@ const mainMenuTemplate = [
   {
     label: '&Add Spell',
     click() {createAddWindow()}
+  },
+  {
+    label: '&Theme',
+    submenu:[
+      {
+        label: '&Default',
+        click(){saveTheme('default')}
+      },
+      {
+        label: 'Da&rk',
+        click(){saveTheme('dark')}
+      }
+    ]
   },
   //DEBUG BELOW
   {
@@ -270,3 +305,20 @@ ipcMain.on('spell:delete', (event, spellId) =>{
   })
 });
 
+//Update the 'theme' value in settings.json
+function saveTheme(theme){
+  //Load saved data from settings.json
+  fs.readFile("./src/data/settings.json", (err, data) =>{
+    //Output errors
+    if(err) {
+      console.log(err);
+    }
+    else{
+      let savedSettings = JSON.parse(data)
+      savedSettings.theme = theme;
+
+      let newSettings = JSON.stringify(savedSettings);
+      fs.writeFile("./src/data/settings.json",newSettings,'utf8',() => {});
+    }
+  });
+} 

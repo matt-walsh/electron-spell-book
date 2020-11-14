@@ -1,8 +1,8 @@
 {
-  "name": "no-state",
-  "productName": "no-state",
+  "name": "spell-tome",
+  "productName": "Wizards Tome - Spell Book Manager",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "A place to record your spells for posterity. Spells not included.",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start",
@@ -25,7 +25,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "no_state"
+            "name": "spell-tome"
           }
         },
         {

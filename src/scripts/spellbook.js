@@ -60,7 +60,6 @@ function createSpellTable(spell){
   //TODO: Show School Name Instead of id
 
   let ritualData = document.createElement('td');
-  console.log(spell.ritual);
   if(Number.parseInt(spell.ritual) === 1){
     ritualData.appendChild(document.createTextNode('X'));
   }
@@ -143,6 +142,22 @@ function createSpellTable(spell){
   return spellTable;
 }
 
+//Applies a theme, if the setting has been saved.
+function applyTheme(theme){
+  //Get a reference to the style style sheet link tag
+  let currentSheet = document.getElementById('spellbook-style');
+
+  switch (theme) {
+    case 'dark':
+      currentSheet.href = "../styles/spellbook-styles-dark.css";
+      break;
+  
+    default:
+      currentSheet.href = "../styles/spellbook-styles-default.css";
+      break;
+  }
+}
+
 ipcRenderer.on('spell:refresh', (event, spells) =>{
   //Clear pages for refresh
   let rightPage = document.querySelector('#right-page');
@@ -183,8 +198,19 @@ ipcRenderer.on('spell:refresh', (event, spells) =>{
   });
 });
 
+ipcRenderer.on('settings:apply', (event, savedSettings) =>{
+  //Change href value to correct theme
+  if(savedSettings.theme){
+    applyTheme(savedSettings.theme);
+  }
+
+  //TODO: Update spell slots from saved settings
+})
+
+
+
 //Clear Spell Book
-ipcRenderer.on('spell:clear', function(){
+ipcRenderer.on('spell:clear', () =>{
   document.querySelector('#left-page').innerText = '';
   document.querySelector('#right-page').innerText = '';
 });

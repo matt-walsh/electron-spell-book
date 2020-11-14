@@ -1,0 +1,24 @@
+body {
+    background-color: #081822;;
+    font-family: Caveat-Brush;
+    font-size: 12pt;
+    color: #2d485c;
+}
+
+input, checkbox{
+    background-color: #000407;
+    color: #2d485c;
+}
+
+.button{
+    background-color: #000407;
+    border: none;
+    color: #2d485c;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.cancel{
+    background-color: #410909;
+}
